@@ -130,7 +130,7 @@ module DE10_LITE_Golden_Top(
 	wire clkOut;
 	wire [29:0] timeOut;
 	reg [15:0] reset1 = 50000; // clockDiv reset
-	reg [13:0] reset2 = 1000000; // timer_ms reset
+	reg [19:0] reset2 = 1000000; // timer_ms reset
 
 	clockDiv clk1KHz(MAX10_CLK1_50, reset1, clkOut); // divides 50MHz down to 1Khz
 	timer tms(clkOut, reset2, timeOut); // generates a millisecond accurate timer
