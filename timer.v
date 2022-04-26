@@ -8,7 +8,7 @@ module clockDiv(input clk, input[15:0] divider, output clkOut);
    always@(posedge clk) begin
 		counter <= counter + 1;
 
-		if(counter == (divider / 2)) begin
+		if(counter == (divider/ 2)) begin
 			counter <= 0;
 			state <= ~state;
         end
@@ -18,13 +18,14 @@ module clockDiv(input clk, input[15:0] divider, output clkOut);
 endmodule
 
 
-// The timer module takes a 14-bit reset input in order to reset the clock
-// after a given number of clock cycles (in this case 10000). There are six
+// The timer module takes a 19-bit reset input in order to reset the clock
+// after a given number of clock cycles (in this case 1,000,000). There are six
 // outputs encoded into a single 30-bit binary number (binEncode). 10 most
-// significant bits are hardcoded to be in the OFF state, as we only want to
-// count from 0 - 9 seconds, with three additional decimal places to make
-// this a millisecond accurate timer.
-module timer(input clk, input [13:0] reset, output [29:0] timeOut);
+// significant bits are hardcoded to be in the OFF state initially, but illuminate
+// as the timer counts from 0 - 999 seconds, with three additional decimal places to 
+// make this a millisecond accurate timer. When the timer resets back to zero, the 
+// hundreds and tens place turn off and the ones place resets to 0.
+module timer(input clk, input [19:0] reset, output [29:0] timeOut);
 	// initialize encodeBin to it's defaul state (__0.000)
 	reg [29:0] encodeBin = {5'b10100, 5'b10100, 5'b01010, 5'b0, 5'b0, 5'b0};
 	integer clockCycles = 1;
@@ -53,13 +54,31 @@ module timer(input clk, input [13:0] reset, output [29:0] timeOut);
 				if(clockCycles % 1000 == 0) begin
 					encodeBin[14:10] = 5'b0; // reset digt
 					encodeBin[19:15] = encodeBin[19:15] + 5'b1; // increment place
+
+					// if clockCycles is a multiple of 10000:
+					// reset the ones place digit to zero (__0.xxx)
+					// and increment the tens place digit
+					if(clockCycles % 10000 == 0) begin
+						encodeBin[19:15] = 5'b01010; // reset digt
+						if(encodeBin[24:20] == 5'b10100) begin encodeBin[24:20] = 5'b0; end
+						encodeBin[24:20] = encodeBin[24:20] + 5'b1; // increment place
+
+						// if clockCycles is a multiple of 100000:
+						// reset the tens place digit to zero (_0x.xxx)
+						// and increment the hundreds place digit
+						if(clockCycles % 100000 == 0) begin
+							encodeBin[24:20] = 5'b0; // reset digt
+							if(encodeBin[29:25] == 5'b10100) begin encodeBin[29:25] = 5'b0; end
+							encodeBin[29:25] = encodeBin[29:25] + 5'b1; // increment place
 					
-					// reset clockCycles counter after 10000 cycles.
-					// reset the ones place (__0.xxx)
-					if(clockCycles == reset) begin
-						clockCycles = 0;
-					    encodeBin[19:15] = 5'b01010;
-				    end
+							// reset clockCycles counter after 1000000 cycles.
+							// reset the hundreds, tens and ones place (__0.xxx)
+							if(clockCycles == reset) begin
+								clockCycles = 0;
+								encodeBin[29:15] = {5'b10100, 5'b10100, 5'b01010};
+							end
+						end
+					end
 			    end
 		    end
         end

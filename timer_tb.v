@@ -7,7 +7,7 @@ module timer_tb;
     wire [29:0] timeOut;
     wire [7:0] hex5, hex4, hex3, hex2, hex1, hex0;
     localparam [15:0] reset1 = 50000; // clockDiv reset
-    localparam [13:0] reset2 = 10000; // timer_ms reset
+    localparam [19:0] reset2 = 1000000; // timer_ms reset
     
 
     // instantiate hardware for a millisecond accurate timer
